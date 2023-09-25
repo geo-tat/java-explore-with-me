@@ -1,6 +1,7 @@
 package ru.practicum.service;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.mapper.Mapper;
@@ -15,12 +16,14 @@ import java.util.List;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class HitServiceImpl implements HitService {
     private final HitRepository repository;
 
     @Override
     @Transactional
     public void saveHit(EndpointHitDto endpointHitDto) {
+        log.info("**************************** Вызов метода saveHit");
         Hit hit = Mapper.toEntity(endpointHitDto);
         repository.save(hit);
     }
@@ -37,7 +40,7 @@ public class HitServiceImpl implements HitService {
                 stats = repository.getUniqueStatsByUrisAndTimestamps(start, end, uris);
             }
         } else {
-            if (uris == null) {
+            if (uris.isEmpty()) {
                 //   не уникальные, но без списка uri
                 stats = repository.getAllStats(start, end);
 
