@@ -64,25 +64,3 @@ public class StatsClient {
         return responseEntity.getBody();
     }
 }
-
-/*
-Object responseBody = rest.getForEntity(
-                uriBuilder.toString(),
-                Object.class, parameters).getBody();
-
-        List<ViewStatsDto> stats = new ArrayList<>();
-        if (responseBody != null) {
-            List<Map<String, Object>> body = (List<Map<String, Object>>) responseBody;
-            if (!body.isEmpty()) {
-                for (Map<String, Object> s : body) {
-                    ViewStatsDto viewStats = ViewStatsDto.builder()
-                            .app(s.get("app").toString())
-                            .uri(s.get("uri").toString())
-                            .hits(((Number) s.get("hits")).longValue())
-                            .build();
-                    stats.add(viewStats);
-                }
-            }
-        }
-        return stats;
- */
