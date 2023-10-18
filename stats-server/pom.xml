@@ -13,9 +13,9 @@
     <artifactId>stats-server</artifactId>
     <packaging>pom</packaging>
     <modules>
-        <module>stat-service</module>
         <module>client-service</module>
         <module>common-dto</module>
+        <module>stat-service</module>
     </modules>
 
     <properties>
