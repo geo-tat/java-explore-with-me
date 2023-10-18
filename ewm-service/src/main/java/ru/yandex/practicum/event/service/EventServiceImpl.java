@@ -124,12 +124,6 @@ public class EventServiceImpl implements EventService {
             if (rangeEnd.isBefore(rangeStart))
                 throw new ValidateDateRangeException("Конфликт временной выборки");
         }
-        /*
-        if (rangeStart == null) {
-            rangeStart = LocalDateTime.now();
-        }
-
-         */
         List<Event> events;
         if (sort.equals("EVENT_DATE")) {
             page = PageRequest.of(from / size, size, Sort.by("eventDate"));
@@ -237,7 +231,7 @@ public class EventServiceImpl implements EventService {
     private void saveStats(HttpServletRequest request) {
         statsClient.saveStats(EndpointHitDto.builder()
                 .uri(request.getRequestURI())
-                .app("main-service")
+                .app("ewm-service")
                 .ip(request.getRemoteAddr())
                 .timestamp(LocalDateTime.now())
                 .build());

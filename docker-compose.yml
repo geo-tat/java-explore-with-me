@@ -23,10 +23,10 @@ services:
       - POSTGRES_USER=root
       - POSTGRES_PASSWORD=password
 
-  main-service:
-    build: main-service
-    image: main-service
-    container_name: main-server
+  ewm-service:
+    build: ewm-service
+    image: ewm-service
+    container_name: ewm-service
     depends_on:
       - main-db
       - stats-server

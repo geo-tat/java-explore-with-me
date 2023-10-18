@@ -10,7 +10,7 @@
     </parent>
 
     <groupId>ru.yandex.practicum</groupId>
-    <artifactId>main-service</artifactId>
+    <artifactId>ewm-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
 
     <properties>
