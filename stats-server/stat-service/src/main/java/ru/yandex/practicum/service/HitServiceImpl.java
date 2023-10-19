@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.yandex.practicum.exception.ValidDateException;
 import ru.yandex.practicum.mapper.Mapper;
 import ru.yandex.practicum.dto.EndpointHitDto;
 import ru.yandex.practicum.dto.ViewStatsDto;
@@ -30,22 +31,21 @@ public class HitServiceImpl implements HitService {
 
     @Override
     public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) {
+        if (start.isAfter(end)) {
+            throw new ValidDateException("Дата начала не может быть раньше даты окончания");
+        }
         List<ViewStatsDto> stats = new ArrayList<>();
-        if (unique) {
-            if (uris == null) {
-                //   уникальные, но без списка uri
+
+        if (uris.isEmpty()) {
+            if (unique) {  // уникальные, но без списка ури
                 stats = repository.getAllUniqueStats(start, end);
-            } else {
-                // уникальные и со списком uri
-                stats = repository.getUniqueStatsByUrisAndTimestamps(start, end, uris);
+            } else {       // не уникальные, без списка ури
+                stats = repository.getAllStats(start, end);
             }
         } else {
-            if (uris.isEmpty()) {
-                //   не уникальные, но без списка uri
-                stats = repository.getAllStats(start, end);
-
-            } else {
-                // неуникальные и со списком ури
+            if (unique) {    // уникальные, со списком
+                stats = repository.getUniqueStatsByUrisAndTimestamps(start, end, uris);
+            } else {       // не уникальные, со списком
                 stats = repository.getStatsByUrisAndTimestamps(start, end, uris);
             }
         }
