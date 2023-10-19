@@ -31,7 +31,7 @@ public class HitServiceImpl implements HitService {
 
     @Override
     public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) {
-        if (start.isAfter(end)) {
+        if (start == null || end == null || start.isAfter(end)) {
             throw new ValidDateException("Дата начала не может быть раньше даты окончания");
         }
         List<ViewStatsDto> stats = new ArrayList<>();
@@ -44,7 +44,7 @@ public class HitServiceImpl implements HitService {
             }
         } else {
             if (unique) {    // уникальные, со списком
-                stats = repository.findHitsByStartAndEndAndByUrisUnique(start, end, uris);
+                stats = repository.getUniqueStatsByUrisAndTimestamps(start, end, uris);
             } else {       // не уникальные, со списком
                 stats = repository.getStatsByUrisAndTimestamps(start, end, uris);
             }

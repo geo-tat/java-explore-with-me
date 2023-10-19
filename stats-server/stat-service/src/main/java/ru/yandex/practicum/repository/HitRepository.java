@@ -31,14 +31,6 @@ public interface HitRepository extends JpaRepository<Hit, Long> {
                                                          @Param("end") LocalDateTime end,
                                                          @Param("uris") List<String> uris);
 
-    @Query("select new ru.yandex.practicum.dto.ViewStatsDto(h.app, h.uri, count(distinct h.ip)) " +
-            "from Hit AS h " +
-            "where (h.date between ?1 and ?2) " +
-            "and h.uri IN (?3) " +
-            "group by h.app, h.uri " +
-            "order by COUNT (DISTINCT h.ip) DESC")
-    List<ViewStatsDto> findHitsByStartAndEndAndByUrisUnique(LocalDateTime start, LocalDateTime end, List<String> uris);
-
     @Query("SELECT new ru.yandex.practicum.dto.ViewStatsDto(h.app,h.uri,  COUNT (h.ip)) "
             + "FROM Hit AS h "
             + "WHERE h.date >= :start AND h.date <= :end "
@@ -57,5 +49,3 @@ public interface HitRepository extends JpaRepository<Hit, Long> {
 
 
 }
-
-

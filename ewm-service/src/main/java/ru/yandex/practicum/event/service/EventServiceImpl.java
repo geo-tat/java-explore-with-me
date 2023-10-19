@@ -118,6 +118,7 @@ public class EventServiceImpl implements EventService {
                                                      Integer size, HttpServletRequest request) {
         PageRequest page = PageRequest.of(from / size, size, Sort.unsorted());
         if (text == null && categories == null && paid == null && rangeStart == null && rangeEnd == null) {
+            saveStats(request);
             return new ArrayList<>();
         }
         if (rangeEnd != null && rangeStart != null) {
@@ -227,6 +228,7 @@ public class EventServiceImpl implements EventService {
                 .ip(request.getRemoteAddr())
                 .timestamp(LocalDateTime.now())
                 .build());
+
 
     }
 
