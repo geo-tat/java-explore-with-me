@@ -44,7 +44,7 @@ public class HitServiceImpl implements HitService {
             }
         } else {
             if (unique) {    // уникальные, со списком
-                stats = repository.getUniqueStatsByUrisAndTimestamps(start, end, uris);
+                stats = repository.findHitsByStartAndEndAndByUrisUnique(start, end, uris);
             } else {       // не уникальные, со списком
                 stats = repository.getStatsByUrisAndTimestamps(start, end, uris);
             }

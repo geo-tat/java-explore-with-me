@@ -183,15 +183,6 @@ public class EventServiceImpl implements EventService {
             }
         }
         PageRequest page = PageRequest.of(from / size, size);
-        /*
-        if (users == null && states == null && categories == null && rangeEnd == null && rangeStart == null) {
-            List<Event> events = repository.findAll(page).getContent();
-            return events.stream()
-                    .map(EventMapper::toDto)
-                    .collect(Collectors.toList());
-        } else {
-
-         */
         List<Event> events = repository.findAllAdmin(users, states, categories, rangeStart, rangeEnd, page);
         return events.stream()
                 .map(EventMapper::toDto)
@@ -228,10 +219,11 @@ public class EventServiceImpl implements EventService {
         return views;
     }
 
+
     private void saveStats(HttpServletRequest request) {
         statsClient.saveStats(EndpointHitDto.builder()
                 .uri(request.getRequestURI())
-                .app("ewm-service")
+                .app("ewm-main-service")
                 .ip(request.getRemoteAddr())
                 .timestamp(LocalDateTime.now())
                 .build());
