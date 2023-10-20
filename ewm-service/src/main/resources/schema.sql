@@ -26,7 +26,6 @@ CREATE TABLE IF NOT EXISTS events (
     created            TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     event_date         TIMESTAMP,
     published          TIMESTAMP,
-    confirmed_requests int,
     location_id        BIGINT REFERENCES locations (id),
     initiator_id       BIGINT REFERENCES users (id),
     paid               boolean,

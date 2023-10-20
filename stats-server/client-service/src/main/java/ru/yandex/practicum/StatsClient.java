@@ -1,11 +1,15 @@
 package ru.yandex.practicum;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.DefaultUriBuilderFactory;
 import ru.yandex.practicum.dto.EndpointHitDto;
 import ru.yandex.practicum.dto.ViewStatsDto;
 
@@ -22,9 +26,13 @@ public class StatsClient {
     private final String url;
     private final RestTemplate rest;
 
-    public StatsClient(@Value("${stats-server.url}") String url, RestTemplate rest) {
+    @Autowired
+    public StatsClient(@Value("${stats-server.url}") String url, RestTemplateBuilder builder) {
         this.url = url;
-        this.rest = rest;
+        this.rest = builder
+                .uriTemplateHandler(new DefaultUriBuilderFactory(url))
+                .requestFactory(HttpComponentsClientHttpRequestFactory::new)
+                .build();
     }
 
     public void saveStats(EndpointHitDto endpointHitDto) {

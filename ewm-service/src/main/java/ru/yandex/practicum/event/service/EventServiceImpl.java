@@ -24,15 +24,13 @@ import ru.yandex.practicum.exception.ValidationUpdateException;
 import ru.yandex.practicum.location.Location;
 import ru.yandex.practicum.location.LocationMapper;
 import ru.yandex.practicum.location.LocationRepository;
+import ru.yandex.practicum.request.repository.RequestRepository;
 import ru.yandex.practicum.user.model.User;
 import ru.yandex.practicum.user.repository.UserRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static ru.yandex.practicum.event.model.StateEvent.PUBLISHED;
@@ -47,6 +45,7 @@ public class EventServiceImpl implements EventService {
     private final UserRepository userRepository;
     private final LocationRepository locationRepository;
     private final CategoryRepository categoryRepository;
+    private final RequestRepository requestRepository;
 
 
     @Override
@@ -62,7 +61,6 @@ public class EventServiceImpl implements EventService {
         eventToSave.setCategory(category);
         eventToSave.setLocation(location);
         eventToSave.setState(StateEvent.PENDING);
-        eventToSave.setConfirmedRequests(0);
         if (eventToSave.getPaid() == null) {
             eventToSave.setPaid(false);
         }
@@ -80,13 +78,35 @@ public class EventServiceImpl implements EventService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User with ID=" + userId + " not found."));
         PageRequest page = PageRequest.of(from / size, size);
-
-        return repository.getEventsByUser(userId, page).stream()
+        List<EventShortDto> events = repository.getEventsByUser(userId, page).stream()
                 .map(EventMapper::toShortDto)
                 .collect(Collectors.toList());
-
-        // как должны сортироваться?
+        setConfirmedRequests(events, requestRepository);
+        return events;
     }
+
+    private static void setConfirmedRequests(List<EventShortDto> list, RequestRepository requestRepository) {
+        List<Integer> requestsCount = requestRepository.getConfirmedRequestsByListOfEvents(list
+                .stream()
+                .map(EventShortDto::getId)
+                .collect(Collectors.toList()));
+
+        for (int i = 0; i < requestsCount.size(); i++) {
+            list.get(i).setConfirmedRequests(requestsCount.get(i));
+        }
+    }
+
+    private static void setConfirmedForFullDto(List<EventDto> list, RequestRepository requestRepository) {
+        List<Integer> requestsCount = requestRepository.getConfirmedRequestsByListOfEvents(list
+                .stream()
+                .map(EventDto::getId)
+                .collect(Collectors.toList()));
+        for (int i = 0; i < requestsCount.size(); i++) {
+            list.get(i).setConfirmedRequests(requestsCount.get(i));
+        }
+    }
+
+
 
     @Override
     public EventDto getEventById(Long userId, Long eventId) {
@@ -94,18 +114,19 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new EntityNotFoundException("User with ID=" + userId + " not found."));
         Event event = repository.findById(eventId)
                 .orElseThrow(() -> new EntityNotFoundException("Event id=" + eventId + " not found!"));
-        return EventMapper.toDto(event);
+        EventDto result = EventMapper.toDto(event);
+        result.setConfirmedRequests(requestRepository.getConfirmedRequestsByEventId(eventId));
+        return result;
     }
 
     @Override
     public EventDto updateEvent(Long userId, Long eventId, UpdateEventUser updateEvent) {
         Event eventToUpdate = repository.findById(eventId)
                 .orElseThrow(() -> new EntityNotFoundException("Event id=" + eventId + " not found!"));
-        //    validDate(updateEvent.getEventDate());
         if (eventToUpdate.getState() == PUBLISHED) {
             throw new ValidationUpdateException("State of event do not have permission to update");
         } else {
-            return update(eventToUpdate, updateEvent);
+            return update(eventToUpdate, updateEvent);   // confirmed добавил в методе update
         }
 
     }
@@ -119,7 +140,7 @@ public class EventServiceImpl implements EventService {
         PageRequest page = PageRequest.of(from / size, size, Sort.unsorted());
         if (text == null && categories == null && paid == null && rangeStart == null && rangeEnd == null) {
             saveStats(request);
-            return new ArrayList<>();
+            return Collections.emptyList();
         }
         if (rangeEnd != null && rangeStart != null) {
             if (rangeEnd.isBefore(rangeStart))
@@ -130,30 +151,24 @@ public class EventServiceImpl implements EventService {
             page = PageRequest.of(from / size, size, Sort.by("eventDate"));
 
         }
+        events = repository.findAllPublishState(rangeStart, rangeEnd, categories,
+                paid, text, page);
         if (onlyAvailable) {
-            events = repository.findAllPublishStateNotOnlyAvailable(rangeStart, rangeEnd, categories,
-                    paid, text, page);
-        } else {
-            events = repository.findAllPublishStateOnlyAvailable(rangeStart,
-                    rangeEnd,
-                    categories,
-                    paid,
-                    text,
-                    page);
+          events = events.stream()
+                    .filter(event -> !requestRepository.getConfirmedRequestsByEventId(event.getId()).equals(event.getParticipantLimit())).collect(Collectors.toList());
         }
-        events.forEach(event -> event.setViews(setViewsInEvent(event)));   // добавил просмотры
+        setViews(events, statsClient);  // добавил просмотры
         saveStats(request);     // сохранил запрос в сервер статистики
-
+        List<EventShortDto> result = events.stream()
+                .map(EventMapper::toShortDto)
+                .collect(Collectors.toList());
         if (sort.equals("VIEWS")) {
-            return events.stream()
-                    .map(EventMapper::toShortDto)
+            return result.stream()
                     .sorted(Comparator.comparingLong(EventShortDto::getViews).reversed())
                     .collect(Collectors.toList());
         }
-        return events
-                .stream()
-                .map(EventMapper::toShortDto)
-                .collect(Collectors.toList());
+        setConfirmedRequests(result,requestRepository);
+        return result;
     }
 
     @Override
@@ -165,7 +180,9 @@ public class EventServiceImpl implements EventService {
         }
         event.setViews(setViewsInEvent(event));
         saveStats(request);
-        return EventMapper.toDto(event);
+        EventDto result = EventMapper.toDto(event);
+        result.setConfirmedRequests(requestRepository.getConfirmedRequestsByEventId(id));
+        return result;
     }
 
 
@@ -185,11 +202,13 @@ public class EventServiceImpl implements EventService {
         }
         PageRequest page = PageRequest.of(from / size, size);
         List<Event> events = repository.findAllAdmin(users, states, categories, rangeStart, rangeEnd, page);
-        return events.stream()
+        List<EventDto> result =  events.stream()
                 .map(EventMapper::toDto)
                 .collect(Collectors.toList());
-
+        setConfirmedForFullDto(result,requestRepository);
+        return result;
     }
+
 
     @Override
     public EventDto updateEventAdmin(Long eventId, UpdateEventAdmin updateEventAdmin) {
@@ -198,7 +217,7 @@ public class EventServiceImpl implements EventService {
         if (eventToUpdate.getState() == PUBLISHED) {
             throw new ValidationUpdateException("State of event do not have permission to update");
         }
-        return updateAdmin(eventToUpdate, updateEventAdmin);
+        return updateAdmin(eventToUpdate, updateEventAdmin);   // confirmed в методе
     }
 
     private void validDate(LocalDateTime eventDate) {
@@ -218,6 +237,34 @@ public class EventServiceImpl implements EventService {
             views = viewStats.get(0).getHits();
         }
         return views;
+    }
+
+    private static void setViews(List<Event> events, StatsClient statsClient) {
+        List<String> uris = events.stream()
+                .map(event -> "/events/" + event.getId())
+                .collect(Collectors.toList());
+
+        LocalDateTime startDate = events
+                .stream()
+                .sorted(Comparator.comparing(Event::getPublished))
+                .collect(Collectors.toList())
+                .get(0)
+                .getPublished();
+
+        List<ViewStatsDto> stats = statsClient.getStats(startDate, LocalDateTime.now(), uris, true);
+
+        Map<Long, Long> eventViews = new HashMap<>();
+
+        for (ViewStatsDto viewStatsDto : stats) {
+            String uri = viewStatsDto.getUri();
+            String[] split = uri.split("/");
+            String id = split[2];
+            Long eventId = Long.parseLong(id);
+            eventViews.put(eventId, viewStatsDto.getHits());
+        }
+        events.forEach(event -> event.setViews(eventViews.get(event.getId())));
+
+
     }
 
 
@@ -272,7 +319,9 @@ public class EventServiceImpl implements EventService {
             eventToUpdate.setLocation(location);
         }
         repository.save(eventToUpdate);
-        return EventMapper.toDto(eventToUpdate);
+        EventDto dto = EventMapper.toDto(eventToUpdate);
+        dto.setConfirmedRequests(requestRepository.getConfirmedRequestsByEventId(dto.getId()));
+        return dto;
     }
 
     private EventDto updateAdmin(Event eventToUpdate, UpdateEventAdmin updatedEvent) {
@@ -323,7 +372,9 @@ public class EventServiceImpl implements EventService {
             }
         }
         repository.save(eventToUpdate);
-        return EventMapper.toDto(eventToUpdate);
+        EventDto result = EventMapper.toDto(eventToUpdate);
+        result.setConfirmedRequests(requestRepository.getConfirmedRequestsByEventId(result.getId()));
+        return result;
     }
 }
 

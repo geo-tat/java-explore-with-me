@@ -55,7 +55,8 @@ public class RequestServiceImpl implements RequestService {
         if (!event.getState().equals(StateEvent.PUBLISHED)) {
             throw new ValidationException("Нельзя участвовать в неопубликованном событии");
         }
-        if (event.getConfirmedRequests().equals(event.getParticipantLimit()) && event.getParticipantLimit() != 0) {
+        Integer confirmedRequest = repository.getConfirmedRequestsByEventId(eventId);
+        if (confirmedRequest.equals(event.getParticipantLimit()) && event.getParticipantLimit() != 0) {
             throw new ValidationException("У события достигнут лимит запросов на участие");
         }
 
@@ -68,7 +69,7 @@ public class RequestServiceImpl implements RequestService {
             newRequest.setState(EventRequestStatus.PENDING);
         } else {
             newRequest.setState(EventRequestStatus.CONFIRMED);
-            event.setConfirmedRequests(event.getConfirmedRequests() + 1);
+    //        event.setConfirmedRequests(event.getConfirmedRequests() + 1);
             eventRepository.save(event);
         }
         return RequestMapper.toDto(repository.save(newRequest));
@@ -114,18 +115,21 @@ public class RequestServiceImpl implements RequestService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EntityNotFoundException("Event id=" + eventId + " not found!"));
 
+
+
         if (event.getParticipantLimit() == 0 || !event.getRequestModeration()) {
             throw new ValidationException("Если для события лимит заявок равен 0 или отключена пре-модерация заявок," +
                     " то подтверждение заявок не требуется");
         }
-        if (event.getConfirmedRequests().equals(event.getParticipantLimit())) {
+        Integer confirmedRequest = repository.getConfirmedRequestsByEventId(eventId);
+        if (confirmedRequest >= event.getParticipantLimit()) {
             throw new ValidationException("Лимит подтвержденных запросов достигнут");
         }
         List<Request> requests = repository.findAllByIdIn(request.getRequestIds());
         EventRequestStatusUpdateResult result = new EventRequestStatusUpdateResult();
         switch (request.getStatus()) {
             case CONFIRMED:
-                int confirmationLimit = event.getParticipantLimit() - event.getConfirmedRequests();
+                int confirmationLimit = event.getParticipantLimit() - confirmedRequest;
                 for (Request request1 : requests) {
                     if (!request1.getState().equals(EventRequestStatus.PENDING)) {
                         throw new ValidationException("Cтатус можно изменить только у заявок, находящихся в состоянии ожидания");
@@ -133,7 +137,7 @@ public class RequestServiceImpl implements RequestService {
                     if (confirmationLimit != 0) {
                         request1.setState(EventRequestStatus.CONFIRMED);
                         confirmationLimit--;
-                        event.setConfirmedRequests(event.getConfirmedRequests() + 1);
+     //                   event.setConfirmedRequests(event.getConfirmedRequests() + 1);
                     } else {
                         request1.setState(EventRequestStatus.REJECTED);
                     }

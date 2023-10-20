@@ -32,8 +32,7 @@ public class Event {
     @ManyToOne
     @JoinColumn(name = "category_id")
     Category category;
-    @Column(name = "confirmed_requests")
-    Integer confirmedRequests;
+
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @CreationTimestamp
     LocalDateTime created;

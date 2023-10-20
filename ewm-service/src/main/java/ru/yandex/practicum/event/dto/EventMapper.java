@@ -23,12 +23,11 @@ public class EventMapper {
                 .description(dto.getDescription())
                 .annotation(dto.getAnnotation())
                 .eventDate(dto.getEventDate())
-                .location(dto.getLocation())   //?
+                .location(dto.getLocation())
                 .paid(dto.getPaid())
                 .participantLimit(dto.getParticipantLimit())
                 .requestModeration(dto.getRequestModeration())
                 .title(dto.getTitle())
-                .confirmedRequests(dto.getConfirmedRequests())
                 .build();
 
     }
@@ -37,7 +36,6 @@ public class EventMapper {
         return EventDto.builder()
                 .annotation(event.getAnnotation())
                 .category(CategoryMapper.toDto(event.getCategory()))
-                .confirmedRequests(event.getConfirmedRequests())
                 .createdOn(event.getCreated())
                 .description(event.getDescription())
                 .eventDate(event.getEventDate())
@@ -58,7 +56,6 @@ public class EventMapper {
         return EventShortDto.builder()
                 .annotation(event.getAnnotation())
                 .category(CategoryMapper.toDto(event.getCategory()))
-                .confirmedRequests(event.getConfirmedRequests())
                 .eventDate(event.getEventDate())
                 .id(event.getId())
                 .initiator(UserMapper.toUserShortDto(event.getInitiator()))

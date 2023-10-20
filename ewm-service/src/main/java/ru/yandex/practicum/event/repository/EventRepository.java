@@ -40,26 +40,6 @@ public interface EventRepository extends JpaRepository<Event, Long> {
                              @Param("rangeEnd") LocalDateTime rangeEnd,
                              PageRequest page);
 
-    @Query("SELECT e " +
-            "FROM Event AS e " +
-            "JOIN FETCH e.initiator " +
-            "JOIN FETCH e.category " +
-            "WHERE e.state = 'PUBLISHED' " +
-            "AND (cast(:rangeStart as timestamp) IS NULL OR e.eventDate >= :rangeStart) " +
-            "AND (cast(:rangeEnd as timestamp) IS NULL OR e.eventDate <= :rangeEnd) " +
-            "AND (:categories IS NULL OR e.category.id IN :categories) " +
-            "AND (e.participantLimit = 0 or e.participantLimit > e.confirmedRequests) " +
-            "AND (:paid IS NULL OR e.paid = :paid) " +
-            "AND (:text IS NULL OR (upper(e.annotation) LIKE upper(concat('%', :text, '%'))) " +
-            "or (upper(e.description) LIKE upper(concat('%', :text, '%')))" +
-            "or (upper(e.title) LIKE upper(concat('%', :text, '%'))))")
-    List<Event> findAllPublishStateOnlyAvailable(LocalDateTime rangeStart,
-                                                 LocalDateTime rangeEnd,
-                                                 List<Long> categories,
-                                                 Boolean paid,
-                                                 String text,
-                                                 PageRequest page);
-
     @Query("select e " +
             "from Event AS e " +
             "JOIN FETCH e.initiator " +
@@ -68,17 +48,16 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             "AND (cast(:rangeStart as timestamp) IS NULL OR e.eventDate >= :rangeStart) " +
             "AND (cast(:rangeEnd as timestamp) IS NULL OR e.eventDate <= :rangeEnd) " +
             "and (:categories is null or e.category.id in :categories) " +
-            "and (e.participantLimit = e.confirmedRequests) " +
             "and (:paid is null or e.paid = :paid) " +
             "and (:text is null or (upper(e.annotation) like upper(concat('%', :text, '%'))) " +
             "or (upper(e.description) like upper(concat('%', :text, '%')))" +
             "or (upper(e.title) like upper(concat('%', :text, '%'))))")
-    List<Event> findAllPublishStateNotOnlyAvailable(LocalDateTime rangeStart,
-                                                    LocalDateTime rangeEnd,
-                                                    List<Long> categories,
-                                                    Boolean paid,
-                                                    String text,
-                                                    PageRequest page);
+    List<Event> findAllPublishState(LocalDateTime rangeStart,
+                                    LocalDateTime rangeEnd,
+                                    List<Long> categories,
+                                    Boolean paid,
+                                    String text,
+                                    PageRequest page);
 
     Collection<Event> findAllByCategoryId(Long id);
 }
