@@ -262,7 +262,7 @@ public class EventServiceImpl implements EventService {
             Long eventId = Long.parseLong(id);
             eventViews.put(eventId, viewStatsDto.getHits());
         }
-        events.forEach(event -> event.setViews(eventViews.get(event.getId())));
+        events.forEach(event -> event.setViews(eventViews.getOrDefault(event.getId(),0L)));
 
 
     }
