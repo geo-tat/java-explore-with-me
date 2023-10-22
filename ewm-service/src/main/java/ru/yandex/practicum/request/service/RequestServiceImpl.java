@@ -48,7 +48,6 @@ public class RequestServiceImpl implements RequestService {
                 .orElseThrow(() -> new EntityNotFoundException("User with ID=" + userId + " not found."));
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EntityNotFoundException("Event id=" + eventId + " not found!"));
-        // нельзя добавить повторный запрос (Ожидается код ошибки 409)   перехватывается в бд
         if (event.getInitiator().getId().equals(userId)) {
             throw new ValidationException("Инициатор события не может добавить запрос на участие в своём событии");
         }
@@ -69,7 +68,6 @@ public class RequestServiceImpl implements RequestService {
             newRequest.setState(EventRequestStatus.PENDING);
         } else {
             newRequest.setState(EventRequestStatus.CONFIRMED);
-    //        event.setConfirmedRequests(event.getConfirmedRequests() + 1);
             eventRepository.save(event);
         }
         return RequestMapper.toDto(repository.save(newRequest));
@@ -116,7 +114,6 @@ public class RequestServiceImpl implements RequestService {
                 .orElseThrow(() -> new EntityNotFoundException("Event id=" + eventId + " not found!"));
 
 
-
         if (event.getParticipantLimit() == 0 || !event.getRequestModeration()) {
             throw new ValidationException("Если для события лимит заявок равен 0 или отключена пре-модерация заявок," +
                     " то подтверждение заявок не требуется");
@@ -137,7 +134,6 @@ public class RequestServiceImpl implements RequestService {
                     if (confirmationLimit != 0) {
                         request1.setState(EventRequestStatus.CONFIRMED);
                         confirmationLimit--;
-     //                   event.setConfirmedRequests(event.getConfirmedRequests() + 1);
                     } else {
                         request1.setState(EventRequestStatus.REJECTED);
                     }
