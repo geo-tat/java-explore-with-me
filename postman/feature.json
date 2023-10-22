@@ -149,6 +149,10 @@
 									"    var jsonData = pm.response.json();",
 									"    pm.expect(jsonData).to.have.property('created');",
 									"});",
+									"pm.test(\"Test comment 'updated' field\",function () {",
+									" var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('updated');",
+									"});",
 									""
 								],
 								"type": "text/javascript"
@@ -698,6 +702,10 @@
 									"pm.test(\"Test comment 'created' field\", function () {",
 									"    var jsonData = pm.response.json();",
 									"    pm.expect(jsonData).to.have.property('created');",
+									"});",
+									"pm.test(\"Test comment 'updated' field\",function () {",
+									" var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('updated');",
 									"});",
 									""
 								],
