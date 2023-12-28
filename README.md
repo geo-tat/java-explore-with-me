@@ -1,22 +1,19 @@
-## Ссылка на ПР
-https://github.com/geo-tat/java-explore-with-me/pull/5
-
 # ExploreWithMe 
-#### Бэкенд приложение построенное на микросервисной архитектуре - служит для создания афиши мероприятий и участия в них.
+#### ExploreWithMe is a backend application built on a microservices architecture, serving the purpose of creating event schedules and participating in them.
 
 
-## Стек:
+## Stack:
 #### JAVA 11, REST, JPA, Maven, Spring-Boot, Hibernate, PostgresSQL и H2, Docker
 
-## Функционал:
-- 3 уровня доступа(public/private/admin)
-- База данных уникальных пользователей
-- База данных событий (создание/обновление) с лимитом на участие пользователей
-- Модерация событий админом (публикация/отмена)
-- Создание запросов от пользователей на участие в событие
-- Создание специальных подборок событий
-- Возможность комментировать события
+## Features:
+- Three levels of access (public/private/admin)
+- Database of unique users
+- Database of events (creation/update) with a limit on user participation
+- Event moderation by admin (publishing/cancellation)
+- User requests to participate in events
+- Creation of special event collections
+- Ability to comment on events
 
-## Структура базы данных основного сервиса:
+## Main Service Database Structure:
 
 ![ewm-main-service](ewm-main-service.png)
